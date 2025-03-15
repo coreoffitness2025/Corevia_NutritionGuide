@@ -224,6 +224,7 @@
 
         <h3>🍽 하루 3끼 권장 섭취량</h3>
         <p>간식으로 단백질 보충제(1스쿱 - 단백질 30g) 섭취 가정</p>
+        <p>단백질 1끼 섭취량이 30g이 넘을 경우 끼니를 추가로 편성할 것 </p>
         <p>단백질: ${mealProtein}g / 탄수화물: ${mealCarbs}g / 지방: ${mealFats}g (끼니당)</p>
       `;
 
@@ -238,7 +239,7 @@
         <h3>🍚 탄수화물 급원 예시</h3>
         <ul>
           ${CARB_SOURCES.map(item => `
-            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g, 탄수화물 ${item.carbs}g, 지 ${item.fat}g</li>
+            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g, 탄수화물 ${item.carbs}g, 지방방 ${item.fat}g</li>
           `).join("")}
         </ul>
         <h3>🥑 지방 급원 예시</h3>
