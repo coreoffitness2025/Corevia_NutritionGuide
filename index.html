@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <!-- 검색 노출을 막으려면 -->
+  <meta name="robots" content="noindex, nofollow">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Core of Fitness 칼로리 계산기 (예시 식단 조합 기능)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .brand-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .brand-header img {
+      max-width: 120px;
+      margin-bottom: 8px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      width: 100%;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f4f4f4;
+      border-radius: 8px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    ul {
+      margin-top: 0;
+      padding-left: 20px;
+    }
+    .notice {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #666;
+    }
+    .example-meal {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .example-meal p {
+      margin: 6px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="brand-header">
+    <img src="https://via.placeholder.com/120x60.png?text=Brand+Logo" alt="Core of Fitness 로고">
+    <h1>Core of Fitness 칼로리 계산기</h1>
+  </div>
+
+  <!-- 입력 폼 -->
+  <label>성별:
+    <select id="gender">
+      <option value="male">남성</option>
+      <option value="female">여성</option>
+    </select>
+  </label>
+
+  <label>나이 (세):
+    <input type="number" id="age" placeholder="예: 30">
+  </label>
+
+  <label>신장 (cm):
+    <input type="number" id="height" placeholder="예: 170">
+  </label>
+
+  <label>체중 (kg):
+    <input type="number" id="weight" placeholder="예: 65">
+  </label>
+
+  <label>활동지수:
+    <select id="activity">
+      <option value="1.2">매우 낮음</option>
+      <option value="1.375">가벼운 활동</option>
+      <option value="1.55">보통 활동</option>
+      <option value="1.725">높은 활동</option>
+    </select>
+  </label>
+
+  <button onclick="calculate()">🔥 계산하기</button>
+
+  <!-- 결과 영역 -->
+  <div class="result" id="result"></div>
+
+  <div class="notice">
+    ※ 이 페이지는 예시용으로, 실제 권장 식단은 개인 목표와 건강상태에 따라 달라집니다.<br>
+    ※ 무단 복제·배포를 삼가 주세요.
+  </div>
+
+  <script>
+    // (1) 식재료 정보를 객체 형태로 구성 (100g 기준 단/탄/지)
+    const PROTEIN_SOURCES = [
+      { name: "돼지 뒷다리살", protein: 21, carbs: 0, fat: 8 },
+      { name: "돼지 안심", protein: 22, carbs: 0, fat: 5 },
+      { name: "닭가슴살", protein: 23, carbs: 0, fat: 2 },
+      { name: "닭안심", protein: 22, carbs: 0, fat: 2 },
+      { name: "소고기 우둔살", protein: 21, carbs: 0, fat: 6 },
+      { name: "연어", protein: 20, carbs: 0, fat: 13 },
+      { name: "무지방 그릭요거트", protein: 10, carbs: 4, fat: 0 },
+      { name: "계란", protein: 12, carbs: 1, fat: 10 }
+    ];
+
+    const CARB_SOURCES = [
+      { name: "현미밥", protein: 3, carbs: 35, fat: 1 },
+      { name: "통밀 베이글", protein: 10, carbs: 45, fat: 1 },
+      { name: "통밀 파스타", protein: 14, carbs: 70, fat: 2 },
+      { name: "오트밀", protein: 13, carbs: 66, fat: 7 },
+      { name: "고구마", protein: 1.5, carbs: 30, fat: 0.1 },
+      { name: "감자", protein: 2, carbs: 20, fat: 0.1 }
+    ];
+
+    const FAT_SOURCES = [
+      { name: "땅콩버터", protein: 25, carbs: 20, fat: 50 },
+      { name: "아몬드버터", protein: 20, carbs: 20, fat: 55 },
+      { name: "견과류", protein: 15, carbs: 15, fat: 50 },
+      { name: "아보카도", protein: 2, carbs: 8, fat: 15 }
+    ];
+
+    // 무작위 아이템 선택
+    function pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function calculate() {
+      const gender = document.getElementById("gender").value;
+      const age = parseInt(document.getElementById("age").value);
+      const height = parseFloat(document.getElementById("height").value);
+      const weight = parseFloat(document.getElementById("weight").value);
+      const activity = parseFloat(document.getElementById("activity").value);
+
+      if (!age || !height || !weight) {
+        alert("나이, 키, 체중을 모두 입력해주세요.");
+        return;
+      }
+
+      // 기초대사량(BMR) 계산
+      let bmr;
+      if (gender === "male") {
+        bmr = 66 + (13.7 * weight) + (5 * height) - (6.8 * age);
+      } else {
+        bmr = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
+      }
+
+      // 일일 에너지 소모량(TDEE)
+      const tdee = bmr * activity;
+
+      // 예시: 한국형 유지 칼로리(85%), 감량 칼로리(그중 85%)
+      const adjusted = tdee * 0.85;
+      const cut = adjusted * 0.85;
+
+      // 매크로 비율(단30, 탄50, 지20)
+      const macros = {
+        proteinRatio: 0.3,
+        carbRatio: 0.5,
+        fatRatio: 0.2
+      };
+
+      // g 단위 환산 (단·탄=4kcal/g, 지방=9kcal/g)
+      const totalProtein = (cut * macros.proteinRatio) / 4;
+      const totalCarbs   = (cut * macros.carbRatio)   / 4;
+      const totalFats    = (cut * macros.fatRatio)    / 9;
+
+      // 예: 하루 4끼 → 1끼 권장량
+      const mealProtein = (totalProtein / 4).toFixed(1);
+      const mealCarbs   = (totalCarbs / 4).toFixed(1);
+      const mealFats    = (totalFats / 4).toFixed(1);
+
+      // 결과 요약
+      let html = `
+        <h2>📊 결과 요약</h2>
+        <p><b>BMR:</b> ${bmr.toFixed(0)} kcal</p>
+        <p><b>TDEE:</b> ${tdee.toFixed(0)} kcal</p>
+        <p><b>유지 칼로리(예시):</b> ${adjusted.toFixed(0)} kcal</p>
+        <p><b>감량 칼로리(예시):</b> ${cut.toFixed(0)} kcal</p>
+
+        <h3>🍽 1끼 권장 섭취량 (하루 4끼 기준)</h3>
+        <p>단백질: ${mealProtein} g / 탄수화물: ${mealCarbs} g / 지방: ${mealFats} g</p>
+
+        <h3>🥩 단백질 급원 (복합 영양소 포함)</h3>
+        <ul>
+          ${PROTEIN_SOURCES.map(item => `
+            <li>${item.name} (100g 기준: 단 ${item.protein}g / 탄 ${item.carbs}g / 지 ${item.fat}g)</li>
+          `).join("")}
+        </ul>
+
+        <h3>🍚 탄수화물 급원 (복합 영양소 포함)</h3>
+        <ul>
+          ${CARB_SOURCES.map(item => `
+            <li>${item.name} (100g 기준: 단 ${item.protein}g / 탄 ${item.carbs}g / 지 ${item.fat}g)</li>
+          `).join("")}
+        </ul>
+
+        <h3>🥑 지방 급원 (복합 영양소 포함)</h3>
+        <ul>
+          ${FAT_SOURCES.map(item => `
+            <li>${item.name} (100g 기준: 단 ${item.protein}g / 탄 ${item.carbs}g / 지 ${item.fat}g)</li>
+          `).join("")}
+        </ul>
+      `;
+
+      // 무작위 식재료로 1끼 예시 조합
+      const mealProteinNeeded = parseFloat(mealProtein);
+      const mealCarbsNeeded   = parseFloat(mealCarbs);
+      const mealFatsNeeded    = parseFloat(mealFats);
+
+      const randomProteinItem = pickRandom(PROTEIN_SOURCES);
+      const randomCarbItem    = pickRandom(CARB_SOURCES);
+      const randomFatItem     = pickRandom(FAT_SOURCES);
+
+      // 무척 단순화된 중량 계산 (복합영양소 상호 간섭 무시)
+      const proteinItemAmount = (mealProteinNeeded / randomProteinItem.protein) * 100;
+      const carbItemAmount    = (mealCarbsNeeded   / randomCarbItem.carbs)     * 100;
+      const fatItemAmount     = (mealFatsNeeded    / randomFatItem.fat)        * 100;
+
+      const exampleHtml = `
+        <div class="example-meal">
+          <h3>🍽 1끼 예시 식단 조합</h3>
+          <p><b>단백질 식품:</b> ${randomProteinItem.name} 
+             약 <b>${proteinItemAmount.toFixed(0)}g</b> 섭취</p>
+          <p><b>탄수화물 식품:</b> ${randomCarbItem.name} 
+             약 <b>${carbItemAmount.toFixed(0)}g</b> 섭취</p>
+          <p><b>지방 식품:</b> ${randomFatItem.name} 
+             약 <b>${fatItemAmount.toFixed(0)}g</b> 섭취</p>
+          <p style="margin-top:10px; font-size:14px; color:#555;">
+            ※ 실제로는 각 식품에 다른 영양소도 있어 목표와 오차가 날 수 있습니다.
+          </p>
+        </div>
+      `;
+
+      document.getElementById("result").innerHTML = html + exampleHtml;
+    }
+  </script>
+</body>
+</html>
