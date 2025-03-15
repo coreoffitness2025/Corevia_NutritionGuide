@@ -229,22 +229,22 @@
 
       // (10) 상세 식재료 목록
       html += `
-        <h3>🥩 단백질 급원</h3>
+        <h3>🥩 단백질 급원 예시</h3>
         <ul>
           ${PROTEIN_SOURCES.map(item => `
-            <li>${item.name} - 100g 당: 단 ${item.protein}g, 탄 ${item.carbs}g, 지 ${item.fat}g</li>
+            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g, 탄수화물 ${item.carbs}g, 지방 ${item.fat}g</li>
           `).join("")}
         </ul>
-        <h3>🍚 탄수화물 급원</h3>
+        <h3>🍚 탄수화물 급원 예시</h3>
         <ul>
           ${CARB_SOURCES.map(item => `
-            <li>${item.name} - 100g 당: 단 ${item.protein}g, 탄 ${item.carbs}g, 지 ${item.fat}g</li>
+            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g, 탄수화물 ${item.carbs}g, 지 ${item.fat}g</li>
           `).join("")}
         </ul>
-        <h3>🥑 지방 급원</h3>
+        <h3>🥑 지방 급원 예시</h3>
         <ul>
           ${FAT_SOURCES.map(item => `
-            <li>${item.name} - 100g 당: 단 ${item.protein}g, 탄 ${item.carbs}g, 지 ${item.fat}g</li>
+            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g, 탄수화물 ${item.carbs}g, 지방 ${item.fat}g</li>
           `).join("")}
         </ul>
       `;
