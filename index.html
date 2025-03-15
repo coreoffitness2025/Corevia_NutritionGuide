@@ -2,7 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <!-- 검색 노출 방지 예시 -->
   <meta name="robots" content="noindex, nofollow">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Core of Fitness - 간편 칼로리 계산기</title>
   <style>
@@ -67,6 +69,20 @@
     .example-meal p {
       margin: 6px 0;
     }
+    /* 새로 추가: 매크로 하이라이트 박스 */
+    .macro-highlight {
+      margin-top: 10px;
+      padding: 10px;
+      border: 2px solid #aaa;
+      border-radius: 6px;
+      background: #fff;
+      display: inline-block;
+    }
+    .macro-highlight span {
+      display: inline-block;
+      margin-right: 12px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -97,7 +113,6 @@
     <input type="number" id="weight" placeholder="예: 65">
   </label>
 
-  <!-- 활동지수 4단계 -->
   <label>활동지수:
     <select id="activity">
       <option value="1.2">운동을 하지 않는다 (거의 좌식, 운동X)</option>
@@ -109,8 +124,8 @@
 
   <label>목적:
     <select id="goal">
-      <option value="gain">증량 </option>
-      <option value="loss">감량 </option>
+      <option value="gain">증량</option>
+      <option value="loss">감량</option>
     </select>
   </label>
 
@@ -120,14 +135,14 @@
   <div class="result" id="result"></div>
 
   <div class="notice">
-    ※ 본 계산기는 예시용입니다. 개인별 건강 상태나 목표에 따라 실제 섭취 계획은 달라집니다. <br>
-    ※ 본 계산기는 Harris-Benedict 공식으로 산출된 칼로리를 기준으로, 한국인에 맞춰 조정하여 15% 낮추어 칼로리를 계산하였습니다. <br>
-    ※ 실제 식단을 유지해보며 2~4주간 체중 변화 추세를 확인 후, 조금씩 보정하여 진짜 본인의 유지 칼로리를 찾을 수 있도록 해야 합니다. <br>
-    ※ 단백질 보충제(1스쿱=30g 단백질)를 하루에 한번 간식으로 섭취했다고 가정하고, 나머지 식단 구성량을 계산합니다. <br>
+    ※ 본 계산기는 예시용입니다. 개인별 건강 상태나 목표에 따라 실제 섭취 계획은 달라집니다.<br>
+    ※ 본 계산기는 Harris-Benedict 공식으로 산출된 칼로리를 기준으로, 한국인에 맞춰 조정하여 15% 낮추어 칼로리를 계산하였습니다.<br>
+    ※ 실제 식단을 유지해보며 2~4주간 체중 변화 추세를 확인 후, 조금씩 보정하여 진짜 본인의 유지 칼로리를 찾을 수 있도록 해야 합니다.<br>
+    ※ 단백질 보충제(1스쿱=30g 단백질)를 하루에 한번 간식으로 섭취했다고 가정하고, 나머지 식단 구성량을 계산합니다.<br>
   </div>
 
   <script>
-    // 식재료 DB (100g 기준 단백질/탄수화물/지방 g)
+    // (A) 식재료 DB
     const PROTEIN_SOURCES = [
       { name: "돼지 뒷다리살", protein: 21, carbs: 0,   fat: 8 },
       { name: "돼지 안심",     protein: 22, carbs: 0,   fat: 5 },
@@ -155,11 +170,11 @@
       { name: "아보카도",  protein: 2,  carbs: 8,  fat: 15 }
     ];
 
-    // 무작위 아이템 선택
     function pickRandom(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
+    // (B) 메인 계산 함수
     function calculate() {
       const gender = document.getElementById("gender").value;
       const age = parseInt(document.getElementById("age").value);
@@ -173,7 +188,7 @@
         return;
       }
 
-      // (1) 하루 기초 소비 칼로리 (Harris-Benedict)
+      // (1) BMR 계산
       let bmr;
       if (gender === "male") {
         bmr = 66 + (13.7 * weight) + (5 * height) - (6.8 * age);
@@ -181,75 +196,66 @@
         bmr = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
       }
 
-      // (2) 활동지수 적용 → TDEE
+      // (2) 활동지수 → rawTdee
       const rawTdee = bmr * activity;
 
-      // (3) 한국인 대비 15% 차감
+      // (3) 한국인 15% 차감
       const tdee = rawTdee * 0.85;
 
-      // (4) 목적에 따라 +10% / -10%
-      let targetCal; // 목표 섭취 칼로리
+      // (4) 목적에 따라 ±10%
+      let targetCal;
       if (goal === "gain") {
-        targetCal = tdee * 1.1;  // 증량
+        targetCal = tdee * 1.1; // 증량
       } else {
-        targetCal = tdee * 0.9;  // 감량
+        targetCal = tdee * 0.9; // 감량
       }
 
-      // (5) 매크로 비율 (단30%, 탄50%, 지20%)
+      // (5) 매크로 비율
       const proteinRatio = 0.3;
       const carbRatio    = 0.5;
       const fatRatio     = 0.2;
 
-      // (6) g 단위로 변환 (단/탄=4kcal, 지방=9kcal)
+      // (6) g 환산
       let totalProtein = (targetCal * proteinRatio) / 4;
-      let totalCarbs   = (targetCal * carbRatio)    / 4;
-      let totalFats    = (targetCal * fatRatio)     / 9;
+      let totalCarbs   = (targetCal * carbRatio) / 4;
+      let totalFats    = (targetCal * fatRatio) / 9;
 
-      // (7) 단백질 보충제: 1스쿱=단백질 30g 선섭취
-      totalProtein = totalProtein - 30;
+      // (7) 단백질 보충제(30g) 선섭취
+      totalProtein -= 30;
       if (totalProtein < 0) totalProtein = 0;
 
-      // (8) 하루 3끼 기준 1끼 권장량
+      // (8) 하루 3끼
       const mealProtein = (totalProtein / 3).toFixed(1);
-      const mealCarbs   = (totalCarbs   / 3).toFixed(1);
-      const mealFats    = (totalFats    / 3).toFixed(1);
+      const mealCarbs   = (totalCarbs / 3).toFixed(1);
+      const mealFats    = (totalFats / 3).toFixed(1);
 
       // (9) 결과 요약
-      let html = 
+      let html = `
         <h2>📊 결과 요약</h2>
         <p><b>하루 기초 소비 칼로리:</b> ${bmr.toFixed(0)} kcal</p>
-        <p><b>유지 칼로리 :</b> 약 ${rawTdee.toFixed(0)} kcal</p>
-        <p><b>한국인 기준으로 조정 :</b> 약 ${tdee.toFixed(0)} kcal</p>
+        <p><b>유지 칼로리:</b> 약 ${rawTdee.toFixed(0)} kcal</p>
+        <p><b>한국인 기준으로 조정:</b> 약 ${tdee.toFixed(0)} kcal</p>
         <p><b>목표 섭취 칼로리 (${goal === "gain" ? "증량" : "감량"}):</b> ${targetCal.toFixed(0)} kcal</p>
 
         <h3>🍽 하루 3끼 권장 섭취량</h3>
         <p>간식으로 단백질 보충제(1스쿱 - 단백질 30g) 섭취 가정</p>
-        <p>단백질: ${mealProtein}g / 탄수화물: ${mealCarbs}g / 지방: ${mealFats}g (끼니당)</p>
-      ;
+        <p>1끼 권장 단백질 섭취량이 40g이 넘을 경우 추가 식사를 구성할 것</p>
+      `;
 
-      // (10) 상세 식재료 목록
-      html += 
-        <h3>🥩 단백질 급원</h3>
-        <ul>
-          ${PROTEIN_SOURCES.map(item => 
-            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g/ 탄수화물 ${item.carbs}g/ 지방 ${item.fat}g</li>
-          ).join("")}
-        </ul>
-        <h3>🍚 탄수화물 급원</h3>
-        <ul>
-          ${CARB_SOURCES.map(item => 
-            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g/ 탄수화물 ${item.carbs}g/ 지방 ${item.fat}g</li>
-          ).join("")}
-        </ul>
-        <h3>🥑 지방 급원</h3>
-        <ul>
-          ${FAT_SOURCES.map(item => 
-            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g/ 탄수화물 ${item.carbs}g/ 지방 ${item.fat}g</li>
-          ).join("")}
-        </ul>
-      ;
+      // (9-1) 매크로 강조를 위해 별도 블록 작성
+      const macroHTML = `
+        <div class="macro-highlight">
+          <span>단백질: ${mealProtein}g</span>
+          <span>탄수화물: ${mealCarbs}g</span>
+          <span>지방: ${mealFats}g</span>
+        </div>
+      `;
 
-      // (11) 무작위 식단 예시 (단순화)
+      html += macroHTML;
+
+      // (11) 무작위 식단 예시를 (10) 상세 식재료 목록 "위로" 옮기기
+      // =====================================================================
+      // 먼저 무작위 식단 예시 계산
       const randomProteinItem = pickRandom(PROTEIN_SOURCES);
       const randomCarbItem    = pickRandom(CARB_SOURCES);
       const randomFatItem     = pickRandom(FAT_SOURCES);
@@ -262,22 +268,49 @@
       const carbAmt    = (mealCarbsNeeded   / randomCarbItem.carbs)     * 100;
       const fatAmt     = (mealFatsNeeded    / randomFatItem.fat)        * 100;
 
-      let exampleHtml = 
+      // 무작위 예시 HTML
+      const exampleHtml = `
         <div class="example-meal">
           <h3>🍽 1끼 예시 식단 조합 (단순 계산)</h3>
-          <p><b>단백질 식품:</b> ${randomProteinItem.name}
-             약 <b>${proteinAmt.toFixed(0)}g</b></p>
-          <p><b>탄수화물 식품:</b> ${randomCarbItem.name}
-             약 <b>${carbAmt.toFixed(0)}g</b></p>
-          <p><b>지방 식품:</b> ${randomFatItem.name}
-             약 <b>${fatAmt.toFixed(0)}g</b></p>
+          <p><b>단백질 식품:</b> ${randomProteinItem.name} 약 <b>${proteinAmt.toFixed(0)}g</b></p>
+          <p><b>탄수화물 식품:</b> ${randomCarbItem.name} 약 <b>${carbAmt.toFixed(0)}g</b></p>
+          <p><b>지방 식품:</b> ${randomFatItem.name} 약 <b>${fatAmt.toFixed(0)}g</b></p>
           <p style="margin-top:10px; font-size:14px; color:#555;">
             ※ 실제로 각 식품에 복합 영양소가 포함되어 있어 오차가 있을 수 있습니다.
           </p>
         </div>
-      ;
+      `;
+      // =====================================================================
 
-      document.getElementById("result").innerHTML = html + exampleHtml;
+      // (10) 상세 식재료 목록
+      const detailHtml = `
+        <h3>🥩 단백질 급원</h3>
+        <ul>
+          ${PROTEIN_SOURCES.map(item => `
+            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g / 탄수화물 ${item.carbs}g / 지방 ${item.fat}g</li>
+          `).join("")}
+        </ul>
+        
+        <h3>🍚 탄수화물 급원</h3>
+        <ul>
+          ${CARB_SOURCES.map(item => `
+            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g / 탄수화물 ${item.carbs}g / 지방 ${item.fat}g</li>
+          `).join("")}
+        </ul>
+
+        <h3>🥑 지방 급원</h3>
+        <ul>
+          ${FAT_SOURCES.map(item => `
+            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g / 탄수화물 ${item.carbs}g / 지방 ${item.fat}g</li>
+          `).join("")}
+        </ul>
+      `;
+
+      // (B-1) 최종 결합 순서: 요약 → 매크로 강조 → "무작위 식단 예시" → 상세 목록
+      const finalHTML = html + exampleHtml + detailHtml;
+
+      // (C) 화면에 출력
+      document.getElementById("result").innerHTML = finalHTML;
     }
   </script>
 </body>
