@@ -2,9 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <!-- 검색 노출을 원치 않으면 -->
   <meta name="robots" content="noindex, nofollow">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Core of Fitness - 간편 칼로리 계산기</title>
   <style>
@@ -99,20 +97,20 @@
     <input type="number" id="weight" placeholder="예: 65">
   </label>
 
+  <!-- 활동지수 4단계 -->
   <label>활동지수:
     <select id="activity">
-      <option value="1.2">아주 낮음(1.2)</option>
-      <option value="1.3">낮음(1.3)</option>
-      <option value="1.45">보통(1.45)</option>
-      <option value="1.6">높음(1.6)</option>
-      <option value="1.7">매우 높음(1.7)</option>
+      <option value="1.2">운동을 하지 않는다 (거의 좌식, 운동X)</option>
+      <option value="1.375">보통이다 (주1~3회 운동)</option>
+      <option value="1.55">많다 (주3~5회 운동)</option>
+      <option value="1.725">아주 많다 (주6~7회 운동)</option>
     </select>
   </label>
 
   <label>목적:
     <select id="goal">
-      <option value="gain">증량 (하루 소비량 +10%)</option>
-      <option value="loss">감량 (하루 소비량 -10%)</option>
+      <option value="gain">증량 (한국인 조정치 +10%)</option>
+      <option value="loss">감량 (한국인 조정치 -10%)</option>
     </select>
   </label>
 
@@ -173,7 +171,7 @@
         return;
       }
 
-      // (1) 하루 기초 소비 칼로리 (BMR) 계산 (Harris-Benedict)
+      // (1) 하루 기초 소비 칼로리 (Harris-Benedict)
       let bmr;
       if (gender === "male") {
         bmr = 66 + (13.7 * weight) + (5 * height) - (6.8 * age);
@@ -181,10 +179,13 @@
         bmr = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
       }
 
-      // (2) 활동량 반영 → 하루 총 소비 칼로리
-      const tdee = bmr * activity;
+      // (2) 활동지수 적용 → TDEE
+      const rawTdee = bmr * activity;
 
-      // (3) 목적에 따라 +10% / -10%
+      // (3) 한국인 대비 15% 차감
+      const tdee = rawTdee * 0.85;
+
+      // (4) 목적에 따라 +10% / -10%
       let targetCal; // 목표 섭취 칼로리
       if (goal === "gain") {
         targetCal = tdee * 1.1;  // 증량
@@ -192,39 +193,39 @@
         targetCal = tdee * 0.9;  // 감량
       }
 
-      // (4) 매크로 비율 (단30%, 탄50%, 지20%) 적용
+      // (5) 매크로 비율 (단30%, 탄50%, 지20%)
       const proteinRatio = 0.3;
       const carbRatio    = 0.5;
       const fatRatio     = 0.2;
 
-      // (5) g 단위로 변환 (단/탄=4kcal, 지방=9kcal)
+      // (6) g 단위로 변환 (단/탄=4kcal, 지방=9kcal)
       let totalProtein = (targetCal * proteinRatio) / 4;
       let totalCarbs   = (targetCal * carbRatio)    / 4;
       let totalFats    = (targetCal * fatRatio)     / 9;
 
-      // (6) 단백질 보충제: 1스쿱=단백질 30g 선섭취 가정
-      //     남은 단백질 총량에서 30g 빼고, 음수가 되지 않도록 처리
+      // (7) 단백질 보충제: 1스쿱=단백질 30g 선섭취
       totalProtein = totalProtein - 30;
       if (totalProtein < 0) totalProtein = 0;
 
-      // (7) 하루 3끼 기준 1끼 권장량
+      // (8) 하루 3끼 기준 1끼 권장량
       const mealProtein = (totalProtein / 3).toFixed(1);
       const mealCarbs   = (totalCarbs   / 3).toFixed(1);
       const mealFats    = (totalFats    / 3).toFixed(1);
 
-      // (8) 결과 요약
+      // (9) 결과 요약
       let html = `
         <h2>📊 결과 요약</h2>
         <p><b>하루 기초 소비 칼로리:</b> ${bmr.toFixed(0)} kcal</p>
-        <p><b>하루 총 소비 칼로리(활동량 반영):</b> ${tdee.toFixed(0)} kcal</p>
+        <p><b>활동량 반영 (Harris-Benedict):</b> 약 ${rawTdee.toFixed(0)} kcal</p>
+        <p><b>한국인 기준 (15% 차감):</b> 약 ${tdee.toFixed(0)} kcal</p>
         <p><b>목표 섭취 칼로리 (${goal === "gain" ? "증량" : "감량"}):</b> ${targetCal.toFixed(0)} kcal</p>
 
         <h3>🍽 하루 3끼 권장 섭취량</h3>
-        <p>(단백질 보충제 30g은 이미 섭취한 것으로 가정)</p>
+        <p>(단백질 보충제 30g 선섭취 가정)</p>
         <p>단백질: ${mealProtein}g / 탄수화물: ${mealCarbs}g / 지방: ${mealFats}g (끼니당)</p>
       `;
 
-      // (9) 상세 식재료 목록
+      // (10) 상세 식재료 목록
       html += `
         <h3>🥩 단백질 급원</h3>
         <ul>
@@ -246,17 +247,15 @@
         </ul>
       `;
 
-      // (10) 무작위 식단 예시 (단순화)
+      // (11) 무작위 식단 예시 (단순화)
       const randomProteinItem = pickRandom(PROTEIN_SOURCES);
       const randomCarbItem    = pickRandom(CARB_SOURCES);
       const randomFatItem     = pickRandom(FAT_SOURCES);
 
-      // 하루 3끼 중 "1끼분"의 필요량 (단, 이미 30g은 보충제로 먹었다는 건 전체 일일 단백질에 반영됨)
       const mealProteinNeeded = parseFloat(mealProtein);
       const mealCarbsNeeded   = parseFloat(mealCarbs);
       const mealFatsNeeded    = parseFloat(mealFats);
 
-      // 100g 당 protein -> x g 섭취 시 => x/100 * protein
       const proteinAmt = (mealProteinNeeded / randomProteinItem.protein) * 100;
       const carbAmt    = (mealCarbsNeeded   / randomCarbItem.carbs)     * 100;
       const fatAmt     = (mealFatsNeeded    / randomFatItem.fat)        * 100;
@@ -271,7 +270,7 @@
           <p><b>지방 식품:</b> ${randomFatItem.name}
              약 <b>${fatAmt.toFixed(0)}g</b></p>
           <p style="margin-top:10px; font-size:14px; color:#555;">
-            ※ 실제로 각 식품에 복합 영양소가 섞여 있으므로 오차가 있습니다.
+            ※ 실제로 각 식품에 복합 영양소가 포함되어 있어 오차가 있을 수 있습니다.
           </p>
         </div>
       `;
