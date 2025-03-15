@@ -222,10 +222,26 @@
         <p><b>한국인 기준으로 조정 :</b> 약 ${tdee.toFixed(0)} kcal</p>
         <p><b>목표 섭취 칼로리 (${goal === "gain" ? "증량" : "감량"}):</b> ${targetCal.toFixed(0)} kcal</p>
 
-        <h3>🍽 하루 3끼 권장 섭취량</h3>
+        <h3>🍽 참고</h3>
         <p>간식으로 단백질 보충제(1스쿱 - 단백질 30g) 섭취 가정</p>
-        <p>단백질 1끼 섭취량이 40g이 넘을 경우 끼니를 추가로 편성할 것 </p>
-        <p>단백질: ${mealProtein}g / 탄수화물: ${mealCarbs}g / 지방: ${mealFats}g (끼니당)</p>
+        <p>단백질 1끼 섭취량이 40g이 넘을 경우 끼니를 추가로 편성할 것 </p>        
+      `;
+
+      let exampleHtml = `
+        <div class="example-meal">
+          <h3>🍽 하루 3끼 권장 섭취량</h3>
+          <p>단백질: ${mealProtein}g / 탄수화물: ${mealCarbs}g / 지방: ${mealFats}g (끼니당)</p>
+          <h3>🍽 1끼 예시 식단 조합 (단순 계산)</h3>
+          <p><b>단백질 식품:</b> ${randomProteinItem.name}
+             약 <b>${proteinAmt.toFixed(0)}g</b></p>
+          <p><b>탄수화물 식품:</b> ${randomCarbItem.name}
+             약 <b>${carbAmt.toFixed(0)}g</b></p>
+          <p><b>지방 식품:</b> ${randomFatItem.name}
+             약 <b>${fatAmt.toFixed(0)}g</b></p>
+          <p style="margin-top:10px; font-size:14px; color:#555;">
+            ※ 실제로 각 식품에 복합 영양소가 포함되어 있어 오차가 있을 수 있습니다.
+          </p>
+        </div>
       `;
 
       // (10) 상세 식재료 목록
@@ -262,21 +278,6 @@
       const proteinAmt = (mealProteinNeeded / randomProteinItem.protein) * 100;
       const carbAmt    = (mealCarbsNeeded   / randomCarbItem.carbs)     * 100;
       const fatAmt     = (mealFatsNeeded    / randomFatItem.fat)        * 100;
-
-      let exampleHtml = `
-        <div class="example-meal">
-          <h3>🍽 1끼 예시 식단 조합 (단순 계산)</h3>
-          <p><b>단백질 식품:</b> ${randomProteinItem.name}
-             약 <b>${proteinAmt.toFixed(0)}g</b></p>
-          <p><b>탄수화물 식품:</b> ${randomCarbItem.name}
-             약 <b>${carbAmt.toFixed(0)}g</b></p>
-          <p><b>지방 식품:</b> ${randomFatItem.name}
-             약 <b>${fatAmt.toFixed(0)}g</b></p>
-          <p style="margin-top:10px; font-size:14px; color:#555;">
-            ※ 실제로 각 식품에 복합 영양소가 포함되어 있어 오차가 있을 수 있습니다.
-          </p>
-        </div>
-      `;
 
       document.getElementById("result").innerHTML = html + exampleHtml;
     }
