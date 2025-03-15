@@ -2,9 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <!-- 검색 노출 방지 예시 -->
   <meta name="robots" content="noindex, nofollow">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Core of Fitness - 간편 칼로리 계산기</title>
   <style>
@@ -28,11 +26,19 @@
       margin-top: 8px;
       font-weight: bold;
     }
+
+    /* 
+      ▼ 모든 input, select를 고정 폭 300px으로 하고,
+        box-sizing: border-box를 적용해
+        패딩과 보더가 포함된 폭을 동일하게 유지 
+    */
     input, select {
-      width: 100%;
+      width: 300px; 
+      box-sizing: border-box;
       padding: 8px;
       margin-top: 4px;
     }
+
     button {
       margin-top: 20px;
       padding: 10px;
@@ -69,7 +75,6 @@
     .example-meal p {
       margin: 6px 0;
     }
-    /* 새로 추가: 매크로 하이라이트 박스 */
     .macro-highlight {
       margin-top: 10px;
       padding: 10px;
@@ -83,12 +88,14 @@
       margin-right: 12px;
       font-weight: bold;
     }
+    .spacer {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
   <!-- 로고 & 타이틀 -->
   <div class="brand-header">
-    <!-- 예시 로고 (placeholder) -->
     <img src="Core of Fitness.png" alt="Core of Fitness">
     <h1>Core of Fitness 칼로리 계산기</h1>
   </div>
@@ -142,7 +149,7 @@
   </div>
 
   <script>
-    // (A) 식재료 DB
+    // DB
     const PROTEIN_SOURCES = [
       { name: "돼지 뒷다리살", protein: 21, carbs: 0,   fat: 8 },
       { name: "돼지 안심",     protein: 22, carbs: 0,   fat: 5 },
@@ -174,7 +181,6 @@
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    // (B) 메인 계산 함수
     function calculate() {
       const gender = document.getElementById("gender").value;
       const age = parseInt(document.getElementById("age").value);
@@ -188,7 +194,7 @@
         return;
       }
 
-      // (1) BMR 계산
+      // BMR
       let bmr;
       if (gender === "male") {
         bmr = 66 + (13.7 * weight) + (5 * height) - (6.8 * age);
@@ -196,13 +202,12 @@
         bmr = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
       }
 
-      // (2) 활동지수 → rawTdee
+      // 활동지수
       const rawTdee = bmr * activity;
-
-      // (3) 한국인 15% 차감
+      // 한국인 15% 차감
       const tdee = rawTdee * 0.85;
 
-      // (4) 목적에 따라 ±10%
+      // 목적
       let targetCal;
       if (goal === "gain") {
         targetCal = tdee * 1.1; // 증량
@@ -210,39 +215,35 @@
         targetCal = tdee * 0.9; // 감량
       }
 
-      // (5) 매크로 비율
+      // 매크로 계산
       const proteinRatio = 0.3;
       const carbRatio    = 0.5;
       const fatRatio     = 0.2;
 
-      // (6) g 환산
       let totalProtein = (targetCal * proteinRatio) / 4;
       let totalCarbs   = (targetCal * carbRatio) / 4;
       let totalFats    = (targetCal * fatRatio) / 9;
 
-      // (7) 단백질 보충제(30g) 선섭취
+      // 단백질 보충제 30g 선섭취
       totalProtein -= 30;
       if (totalProtein < 0) totalProtein = 0;
 
-      // (8) 하루 3끼
       const mealProtein = (totalProtein / 3).toFixed(1);
-      const mealCarbs   = (totalCarbs / 3).toFixed(1);
-      const mealFats    = (totalFats / 3).toFixed(1);
+      const mealCarbs   = (totalCarbs   / 3).toFixed(1);
+      const mealFats    = (totalFats    / 3).toFixed(1);
 
-      // (9) 결과 요약
       let html = `
         <h2>📊 결과 요약</h2>
         <p><b>하루 기초 소비 칼로리:</b> ${bmr.toFixed(0)} kcal</p>
         <p><b>유지 칼로리:</b> 약 ${rawTdee.toFixed(0)} kcal</p>
-        <p><b>한국인 기준으로 조정:</b> 약 ${tdee.toFixed(0)} kcal</p>
+        <p><b>한국인 기준(15%↓):</b> 약 ${tdee.toFixed(0)} kcal</p>
         <p><b>목표 섭취 칼로리 (${goal === "gain" ? "증량" : "감량"}):</b> ${targetCal.toFixed(0)} kcal</p>
 
         <h3>🍽 하루 3끼 권장 섭취량</h3>
         <p>간식으로 단백질 보충제(1스쿱 - 단백질 30g) 섭취 가정</p>
-        <p>1끼 권장 단백질 섭취량이 40g이 넘을 경우 추가 식사를 구성할 것</p>
       `;
 
-      // (9-1) 매크로 강조를 위해 별도 블록 작성
+      // 매크로 강조
       const macroHTML = `
         <div class="macro-highlight">
           <span>단백질: ${mealProtein}g</span>
@@ -250,25 +251,17 @@
           <span>지방: ${mealFats}g</span>
         </div>
       `;
-
       html += macroHTML;
 
-      // (11) 무작위 식단 예시를 (10) 상세 식재료 목록 "위로" 옮기기
-      // =====================================================================
-      // 먼저 무작위 식단 예시 계산
+      // 무작위 식단 예시
       const randomProteinItem = pickRandom(PROTEIN_SOURCES);
       const randomCarbItem    = pickRandom(CARB_SOURCES);
       const randomFatItem     = pickRandom(FAT_SOURCES);
 
-      const mealProteinNeeded = parseFloat(mealProtein);
-      const mealCarbsNeeded   = parseFloat(mealCarbs);
-      const mealFatsNeeded    = parseFloat(mealFats);
+      const proteinAmt = (mealProtein / randomProteinItem.protein) * 100;
+      const carbAmt    = (mealCarbs   / randomCarbItem.carbs)      * 100;
+      const fatAmt     = (mealFats    / randomFatItem.fat)         * 100;
 
-      const proteinAmt = (mealProteinNeeded / randomProteinItem.protein) * 100;
-      const carbAmt    = (mealCarbsNeeded   / randomCarbItem.carbs)     * 100;
-      const fatAmt     = (mealFatsNeeded    / randomFatItem.fat)        * 100;
-
-      // 무작위 예시 HTML
       const exampleHtml = `
         <div class="example-meal">
           <h3>🍽 1끼 예시 식단 조합 (단순 계산)</h3>
@@ -280,9 +273,10 @@
           </p>
         </div>
       `;
-      // =====================================================================
 
-      // (10) 상세 식재료 목록
+      const spacer = `<div class="spacer"></div>`;
+
+      // 상세 식재료
       const detailHtml = `
         <h3>🥩 단백질 급원</h3>
         <ul>
@@ -290,7 +284,7 @@
             <li>${item.name} - 100g 기준: 단백질 ${item.protein}g / 탄수화물 ${item.carbs}g / 지방 ${item.fat}g</li>
           `).join("")}
         </ul>
-        
+
         <h3>🍚 탄수화물 급원</h3>
         <ul>
           ${CARB_SOURCES.map(item => `
@@ -306,11 +300,8 @@
         </ul>
       `;
 
-      // (B-1) 최종 결합 순서: 요약 → 매크로 강조 → "무작위 식단 예시" → 상세 목록
-      const finalHTML = html + exampleHtml + detailHtml;
-
-      // (C) 화면에 출력
-      document.getElementById("result").innerHTML = finalHTML;
+      // 최종 결합
+      document.getElementById("result").innerHTML = html + exampleHtml + spacer + detailHtml;
     }
   </script>
 </body>
