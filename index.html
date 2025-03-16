@@ -2,14 +2,15 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <!-- 검색엔진 차단 옵션 -->
+  <!-- 검색엔진 노출을 막으려면 -->
   <meta name="robots" content="noindex, nofollow">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Core of Fitness - 간편 칼로리 계산기</title>
+  <title>Core of Fitness - 간편 칼로리 계산기 (3단계)</title>
   <style>
     body {
       font-family: sans-serif;
-      max-width: 900px; 
+      max-width: 900px;
       margin: auto;
       padding: 20px;
       line-height: 1.6;
@@ -22,29 +23,17 @@
       max-width: 300px;
       margin-bottom: 8px;
     }
-
-    /* 
-      ▼ 입력 구간 전체를 감싸는 래퍼 .input-group
-         max-width로 박스를 제한 → 내부에서 width: 100% 
-         하면, 모두 동일 폭으로 맞춰짐 
-    */
-    .input-group {
-      max-width: 100%; /* 필요에 따라 600px, 700px 등으로 조정 가능 */
-      margin-bottom: 20px;
-    }
-    .input-group label {
+    label {
       display: block;
       margin-top: 8px;
       font-weight: bold;
     }
-    .input-group input,
-    .input-group select {
+    input, select {
       width: 100%;
       padding: 8px;
       margin-top: 4px;
-      box-sizing: border-box; /* 패딩 포함해서 100%가 되도록 */
+      box-sizing: border-box;
     }
-
     button {
       margin-top: 20px;
       padding: 10px;
@@ -97,6 +86,17 @@
     .spacer {
       margin-top: 20px;
     }
+    /* 끼니별 식단 블록 */
+    .meal-block {
+      margin-top: 20px;
+      padding: 16px;
+      background: #f9f9f9;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .meal-block h4 {
+      margin-top: 0;
+    }
   </style>
 </head>
 <body>
@@ -106,43 +106,48 @@
     <h1>Core of Fitness 칼로리 계산기</h1>
   </div>
 
-  <!-- 입력 섹션: .input-group 내부에 모든 label + input/select -->
-  <div class="input-group">
-    <label>성별:
-      <select id="gender">
-        <option value="male">남성</option>
-        <option value="female">여성</option>
-      </select>
-    </label>
+  <!-- 입력 섹션 -->
+  <label>성별:
+    <select id="gender">
+      <option value="male">남성</option>
+      <option value="female">여성</option>
+    </select>
+  </label>
 
-    <label>나이 (세):
-      <input type="number" id="age" placeholder="예: 30">
-    </label>
+  <label>나이 (세):
+    <input type="number" id="age" placeholder="예: 30">
+  </label>
 
-    <label>신장 (cm):
-      <input type="number" id="height" placeholder="예: 170">
-    </label>
+  <label>신장 (cm):
+    <input type="number" id="height" placeholder="예: 170">
+  </label>
 
-    <label>체중 (kg):
-      <input type="number" id="weight" placeholder="예: 65">
-    </label>
+  <label>체중 (kg):
+    <input type="number" id="weight" placeholder="예: 65">
+  </label>
 
-    <label>활동지수:
-      <select id="activity">
-        <option value="1.2">운동을 하지 않는다 (거의 좌식, 운동X)</option>
-        <option value="1.3">보통이다 (주3회 운동)</option>
-        <option value="1.5">많다 (주5회 이상 운동)</option>
-        <option value="1.7">아주 많다 (주7회 이상 운동)</option>
-      </select>
-    </label>
+  <label>활동지수:
+    <select id="activity">
+      <option value="1.2">운동을 하지 않는다 (거의 좌식, 운동X)</option>
+      <option value="1.375">보통이다 (주1~3회 운동)</option>
+      <option value="1.55">많다 (주3~5회 운동)</option>
+      <option value="1.725">아주 많다 (주6~7회 운동)</option>
+    </select>
+  </label>
 
-    <label>목적:
-      <select id="goal">
-        <option value="gain">증량</option>
-        <option value="loss">감량</option>
-      </select>
-    </label>
-  </div>
+  <label>목적:
+    <select id="goal">
+      <option value="gain">증량</option>
+      <option value="loss">감량</option>
+    </select>
+  </label>
+
+  <!-- (NEW) 제외할 식품 (멀티 셀렉트) -->
+  <label>제외할 식품 (여러 개 선택 가능):
+    <select id="excludedFoods" multiple style="height:120px;">
+      <!-- 나중에 JS로 옵션을 채워넣거나, 직접 입력 가능 -->
+    </select>
+  </label>
 
   <button onclick="calculate()">🔥 계산하기</button>
 
@@ -151,9 +156,10 @@
 
   <div class="notice">
     ※ 본 계산기는 예시용입니다. 개인별 건강 상태나 목표에 따라 실제 섭취 계획은 달라집니다.<br>
-    ※ 본 계산기는 Harris-Benedict 공식으로 산출된 칼로리를 기준으로, 한국인에 맞춰 조정하여 15% 낮추어 칼로리를 계산하였습니다.<br>
+    ※ 본 계산기는 Harris-Benedict 공식으로 산출된 칼로리를 기준으로, 한국인에 맞춰 15% 낮춰 계산하였습니다.<br>
     ※ 실제 식단을 유지해보며 2~4주간 체중 변화 추세를 확인 후, 조금씩 보정하여 본인의 유지 칼로리를 찾을 수 있도록 해야 합니다.<br>
-    ※ 단백질 보충제(1스쿱=30g 단백질)를 하루에 한번 간식으로 섭취했다고 가정하고, 나머지 식단 구성량을 계산합니다.<br>
+    ※ 단백질 보충제(1스쿱=30g 단백질)를 하루에 한 번 간식으로 섭취했다고 가정하고, 나머지 식단 구성량을 계산합니다.<br>
+    ※ 하루 3끼로 분리해서 식단 예시를 보여주며, 제외 식품이 있으면 랜덤 조합에서 배제합니다.<br>
   </div>
 
   <script>
@@ -168,6 +174,7 @@
       { name: "무지방 그릭요거트", protein: 10, carbs: 4, fat: 0 },
       { name: "계란",         protein: 12, carbs: 1,   fat: 10 }
     ];
+
     const CARB_SOURCES = [
       { name: "현미밥",     protein: 3,  carbs: 35, fat: 1 },
       { name: "통밀 베이글", protein: 10, carbs: 45, fat: 1 },
@@ -176,6 +183,7 @@
       { name: "고구마",      protein: 1.5, carbs: 30, fat: 0.1 },
       { name: "감자",        protein: 2,   carbs: 20, fat: 0.1 }
     ];
+
     const FAT_SOURCES = [
       { name: "땅콩버터",  protein: 25, carbs: 20, fat: 50 },
       { name: "아몬드버터", protein: 20, carbs: 20, fat: 55 },
@@ -183,9 +191,32 @@
       { name: "아보카도",  protein: 2,  carbs: 8,  fat: 15 }
     ];
 
-    // (B) 무작위 아이템 선택
+    // (A-1) 전체 식품 이름 리스트 (옵션 채우기용)
+    const ALL_FOODS = [
+      ...PROTEIN_SOURCES.map(item => item.name),
+      ...CARB_SOURCES.map(item => item.name),
+      ...FAT_SOURCES.map(item => item.name),
+    ];
+
+    // (A-2) onload 시점에 제외할 식품 옵션 채우기
+    window.addEventListener("DOMContentLoaded", () => {
+      const excludedSelect = document.getElementById("excludedFoods");
+      ALL_FOODS.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        excludedSelect.appendChild(opt);
+      });
+    });
+
+    // (B) 무작위 아이템 선택 + 제외 식품 반영
     function pickRandom(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function filterExcluded(arr, excludedArr) {
+      // arr: 원본 식품 배열, excludedArr: 제외할 식품 이름 배열
+      return arr.filter(item => !excludedArr.includes(item.name));
     }
 
     // (C) 메인 계산 함수
@@ -196,6 +227,11 @@
       const weight = parseFloat(document.getElementById("weight").value);
       const activity = parseFloat(document.getElementById("activity").value);
       const goal = document.getElementById("goal").value;
+
+      // 제외 식품
+      const excludedFoodsSelect = document.getElementById("excludedFoods");
+      // selectedOptions는 유사 배열 → Array.from으로 처리
+      const excludedFoodsArr = Array.from(excludedFoodsSelect.selectedOptions).map(opt => opt.value);
 
       if (!age || !height || !weight) {
         alert("나이, 키, 체중을 모두 입력해주세요.");
@@ -222,21 +258,25 @@
         targetCal = tdee * 0.9; // 감량
       }
 
-      // (5) 매크로 계산
-      const proteinRatio = 0.3, carbRatio = 0.5, fatRatio = 0.2;
+      // (5) 매크로 비율
+      const proteinRatio = 0.3;
+      const carbRatio    = 0.5;
+      const fatRatio     = 0.2;
+
       let totalProtein = (targetCal * proteinRatio) / 4;
       let totalCarbs   = (targetCal * carbRatio) / 4;
       let totalFats    = (targetCal * fatRatio) / 9;
 
-      // 보충제 30g 선섭취
+      // 단백질 보충제 30g 선섭취
       totalProtein -= 30;
       if (totalProtein < 0) totalProtein = 0;
 
+      // 하루 3끼 기준
       const mealProtein = (totalProtein / 3).toFixed(1);
       const mealCarbs   = (totalCarbs   / 3).toFixed(1);
       const mealFats    = (totalFats    / 3).toFixed(1);
 
-      // 결과 요약
+      // (9) 결과 요약
       let html = `
         <h2>📊 결과 요약</h2>
         <p><b>하루 기초 소비 칼로리:</b> ${bmr.toFixed(0)} kcal</p>
@@ -246,8 +286,9 @@
 
         <h3>🍽 하루 3끼 권장 섭취량</h3>
         <p>간식으로 단백질 보충제(1스쿱 - 단백질 30g) 섭취 가정</p>
-        <p>단백질 40g 이상이 권장 섭취량일 경우, 별도로 식사를 추가 구성하여 섭취 (4끼 이상)</p>
       `;
+
+      // 매크로 하이라이트
       const macroHTML = `
         <div class="macro-highlight">
           <span>단백질: ${mealProtein}g</span>
@@ -257,54 +298,74 @@
       `;
       html += macroHTML;
 
-      // 무작위 식단 예시
-      const randProtein = pickRandom(PROTEIN_SOURCES);
-      const randCarb    = pickRandom(CARB_SOURCES);
-      const randFat     = pickRandom(FAT_SOURCES);
+      // (B-1) 제외 식품 적용한 배열 준비
+      const proteinArr = filterExcluded(PROTEIN_SOURCES, excludedFoodsArr);
+      const carbArr    = filterExcluded(CARB_SOURCES, excludedFoodsArr);
+      const fatArr     = filterExcluded(FAT_SOURCES, excludedFoodsArr);
 
-      const pAmt = (mealProtein / randProtein.protein) * 100;
-      const cAmt = (mealCarbs   / randCarb.carbs)       * 100;
-      const fAmt = (mealFats    / randFat.fat)          * 100;
+      // (NEW) 하루 3끼 식단 구성
+      // 각 끼니마다 무작위 단/탄/지 식품 1개씩 선택 → 섭취량(g) 계산
+      // 단순화: (mealProtein / proteinItem.protein) * 100 etc.
+      let mealBlocks = ""; // 3끼 HTML 누적
 
-      const exampleHtml = `
-        <div class="example-meal">
-          <h3>🍽 1끼 예시 식단 조합 (단순 계산)</h3>
-          <p><b>단백질 식품:</b> ${randProtein.name} 약 <b>${pAmt.toFixed(0)}g</b></p>
-          <p><b>탄수화물 식품:</b> ${randCarb.name} 약 <b>${cAmt.toFixed(0)}g</b></p>
-          <p><b>지방 식품:</b> ${randFat.name} 약 <b>${fAmt.toFixed(0)}g</b></p>
-          <p style="margin-top:10px; font-size:14px; color:#555;">
-            ※ 실제로 각 식품에 복합 영양소가 포함되어 있어 오차가 있을 수 있습니다.
-          </p>
-        </div>
-      `;
+      for (let i = 1; i <= 3; i++) {
+        // 끼니별 무작위 선택
+        let pItem = pickRandom(proteinArr);
+        let cItem = pickRandom(carbArr);
+        let fItem = pickRandom(fatArr);
 
-      const spacer = `<div class="spacer"></div>`;
+        if (!pItem || !cItem || !fItem) {
+          // 만약 제외 식품이 너무 많아 랜덤 선택 불가 시
+          mealBlocks += `
+            <div class="meal-block">
+              <h4>🍽 끼니 #${i}</h4>
+              <p style="color:red;">(선택할 식품이 부족합니다. 제외 식품을 줄이거나 DB를 늘려보세요.)</p>
+            </div>
+          `;
+          continue;
+        }
+
+        // 끼니당 식품 섭취량
+        let pAmt = (parseFloat(mealProtein) / pItem.protein) * 100;
+        let cAmt = (parseFloat(mealCarbs)   / cItem.carbs)    * 100;
+        let fAmt = (parseFloat(mealFats)    / fItem.fat)      * 100;
+
+        mealBlocks += `
+          <div class="meal-block">
+            <h4>🍽 끼니 #${i} (무작위 예시)</h4>
+            <p><b>단백질 식품:</b> ${pItem.name} 약 <b>${pAmt.toFixed(0)}g</b></p>
+            <p><b>탄수화물 식품:</b> ${cItem.name} 약 <b>${cAmt.toFixed(0)}g</b></p>
+            <p><b>지방 식품:</b> ${fItem.name} 약 <b>${fAmt.toFixed(0)}g</b></p>
+          </div>
+        `;
+      }
+
       // 상세 식재료 목록
       const detailHtml = `
+        <div class="spacer"></div>
         <h3>🥩 단백질 급원</h3>
         <ul>
           ${PROTEIN_SOURCES.map(item => `
-            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g / 탄수화물 ${item.carbs}g / 지방 ${item.fat}g</li>
+            <li>${item.name} (100g): 단 ${item.protein}g / 탄 ${item.carbs}g / 지 ${item.fat}g</li>
           `).join("")}
         </ul>
 
         <h3>🍚 탄수화물 급원</h3>
         <ul>
           ${CARB_SOURCES.map(item => `
-            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g / 탄수화물 ${item.carbs}g / 지방 ${item.fat}g</li>
+            <li>${item.name} (100g): 단 ${item.protein}g / 탄 ${item.carbs}g / 지 ${item.fat}g</li>
           `).join("")}
         </ul>
 
         <h3>🥑 지방 급원</h3>
         <ul>
           ${FAT_SOURCES.map(item => `
-            <li>${item.name} - 100g 기준: 단백질 ${item.protein}g / 탄수화물 ${item.carbs}g / 지방 ${item.fat}g</li>
+            <li>${item.name} (100g): 단 ${item.protein}g / 탄 ${item.carbs}g / 지 ${item.fat}g</li>
           `).join("")}
         </ul>
       `;
 
-      const finalHTML = html + exampleHtml + spacer + detailHtml;
-      document.getElementById("result").innerHTML = finalHTML;
+      document.getElementById("result").innerHTML = html + mealBlocks + detailHtml;
     }
   </script>
 </body>
