@@ -2,10 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <!-- 검색엔진 차단 옵션 -->
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> Corevia Nutrition Guide</title>
+  <title>Corevia Nutrition Guide</title>
   <style>
     body {
       font-family: sans-serif;
@@ -22,14 +21,8 @@
       max-width: 300px;
       margin-bottom: 8px;
     }
-
-    /* 
-      ▼ 입력 구간 전체를 감싸는 래퍼 .input-group
-         max-width로 박스를 제한 → 내부에서 width: 100% 
-         하면, 모두 동일 폭으로 맞춰짐 
-    */
     .input-group {
-      max-width: 100%; /* 필요에 따라 600px, 700px 등으로 조정 가능 */
+      max-width: 100%;
       margin-bottom: 20px;
     }
     .input-group label {
@@ -42,9 +35,8 @@
       width: 100%;
       padding: 8px;
       margin-top: 4px;
-      box-sizing: border-box; /* 패딩 포함해서 100%가 되도록 */
+      box-sizing: border-box;
     }
-
     button {
       margin-top: 20px;
       padding: 10px;
@@ -100,64 +92,86 @@
   </style>
 </head>
 <body>
-  <!-- 로고 & 타이틀 -->
-  <div class="brand-header">
-    <img src="Corevia Fitness.png" alt="Corevia Fitness">
-    <h1>Nutrition Guide - 목표 칼로리 설정 및 식단 추천 도구</h1>
+
+  <!-- 🔐 비밀번호 보호 레이어 -->
+  <div id="password-layer" style="text-align: center; margin-top: 100px;">
+    <h2>🔒 비밀번호를 입력하세요</h2>
+    <input type="password" id="password-input" placeholder="비밀번호 입력" style="padding: 10px; font-size: 16px;">
+    <button onclick="checkPassword()" style="padding: 10px 20px; font-size: 16px; margin-top: 10px;">확인</button>
   </div>
 
-  <!-- 입력 섹션: .input-group 내부에 모든 label + input/select -->
-  <div class="input-group">
-    <label>성별:
-      <select id="gender">
-        <option value="male">남성</option>
-        <option value="female">여성</option>
-      </select>
-    </label>
+  <!-- 🔓 실제 콘텐츠 (처음에는 숨겨짐) -->
+  <div id="main-content" style="display: none;">
 
-    <label>나이 (세):
-      <input type="number" id="age" placeholder="예: 30">
-    </label>
+    <!-- 로고 & 타이틀 -->
+    <div class="brand-header">
+      <img src="Corevia Fitness.png" alt="Corevia Fitness">
+      <h1>Nutrition Guide - 목표 칼로리 설정 및 식단 추천 도구</h1>
+    </div>
 
-    <label>신장 (cm):
-      <input type="number" id="height" placeholder="예: 170">
-    </label>
+    <!-- 입력 섹션 -->
+    <div class="input-group">
+      <label>성별:
+        <select id="gender">
+          <option value="male">남성</option>
+          <option value="female">여성</option>
+        </select>
+      </label>
 
-    <label>체중 (kg):
-      <input type="number" id="weight" placeholder="예: 65">
-    </label>
+      <label>나이 (세):
+        <input type="number" id="age" placeholder="예: 30">
+      </label>
 
-    <label>활동지수:
-      <select id="activity">
-        <option value="1.2">운동을 하지 않는다 (거의 좌식, 운동X)</option>
-        <option value="1.3">보통이다 (주3회 운동)</option>
-        <option value="1.5">많다 (주5회 이상 운동)</option>
-        <option value="1.7">아주 많다 (주7회 이상 운동)</option>
-      </select>
-    </label>
+      <label>신장 (cm):
+        <input type="number" id="height" placeholder="예: 170">
+      </label>
 
-    <label>목적:
-      <select id="goal">
-        <option value="gain">증량</option>
-        <option value="loss">감량</option>
-      </select>
-    </label>
+      <label>체중 (kg):
+        <input type="number" id="weight" placeholder="예: 65">
+      </label>
+
+      <label>활동지수:
+        <select id="activity">
+          <option value="1.2">운동을 하지 않는다 (거의 좌식, 운동X)</option>
+          <option value="1.3">보통이다 (주3회 운동)</option>
+          <option value="1.5">많다 (주5회 이상 운동)</option>
+          <option value="1.7">아주 많다 (주7회 이상 운동)</option>
+        </select>
+      </label>
+
+      <label>목적:
+        <select id="goal">
+          <option value="gain">증량</option>
+          <option value="loss">감량</option>
+        </select>
+      </label>
+    </div>
+
+    <button onclick="calculate()">🔥 계산하기</button>
+
+    <!-- 결과 표시 영역 -->
+    <div class="result" id="result"></div>
+
+    <div class="notice">
+      ※ 본 계산기는 예시용입니다. 개인별 건강 상태나 목표에 따라 실제 섭취 계획은 달라집니다.<br>
+      ※ 본 계산기는 Harris-Benedict 공식으로 산출된 칼로리를 기준으로, 한국인에 맞춰 조정하여 15% 낮추어 칼로리를 계산하였습니다.<br>
+      ※ 실제 식단을 유지해보며 2~4주간 체중 변화 추세를 확인 후, 조금씩 보정하여 본인의 유지 칼로리를 찾을 수 있도록 해야 합니다.<br>
+      ※ 단백질 보충제(1스쿱=30g 단백질)를 하루에 한번 간식으로 섭취했다고 가정하고, 나머지 식단 구성량을 계산합니다.<br>
+    </div>
   </div>
 
-  <button onclick="calculate()">🔥 계산하기</button>
-
-  <!-- 결과 표시 영역 -->
-  <div class="result" id="result"></div>
-
-  <div class="notice">
-    ※ 본 계산기는 예시용입니다. 개인별 건강 상태나 목표에 따라 실제 섭취 계획은 달라집니다.<br>
-    ※ 본 계산기는 Harris-Benedict 공식으로 산출된 칼로리를 기준으로, 한국인에 맞춰 조정하여 15% 낮추어 칼로리를 계산하였습니다.<br>
-    ※ 실제 식단을 유지해보며 2~4주간 체중 변화 추세를 확인 후, 조금씩 보정하여 본인의 유지 칼로리를 찾을 수 있도록 해야 합니다.<br>
-    ※ 단백질 보충제(1스쿱=30g 단백질)를 하루에 한번 간식으로 섭취했다고 가정하고, 나머지 식단 구성량을 계산합니다.<br>
-  </div>
-
+  <!-- 🔐 비밀번호 확인 및 식단 계산 스크립트 -->
   <script>
-    // (A) 식재료 DB
+    function checkPassword() {
+      const pw = document.getElementById("password-input").value;
+      if (pw === "1234") {
+        document.getElementById("password-layer").style.display = "none";
+        document.getElementById("main-content").style.display = "block";
+      } else {
+        alert("비밀번호가 틀렸습니다.");
+      }
+    }
+
     const PROTEIN_SOURCES = [
       { name: "돼지 뒷다리살", protein: 21, carbs: 0,   fat: 8 },
       { name: "돼지 안심",     protein: 22, carbs: 0,   fat: 5 },
@@ -183,12 +197,10 @@
       { name: "아보카도",  protein: 2,  carbs: 8,  fat: 15 }
     ];
 
-    // (B) 무작위 아이템 선택
     function pickRandom(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    // (C) 메인 계산 함수
     function calculate() {
       const gender = document.getElementById("gender").value;
       const age = parseInt(document.getElementById("age").value);
@@ -202,7 +214,6 @@
         return;
       }
 
-      // (1) BMR
       let bmr;
       if (gender === "male") {
         bmr = 66 + (13.7 * weight) + (5 * height) - (6.8 * age);
@@ -210,25 +221,15 @@
         bmr = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
       }
 
-      // (2) 활동지수
       const rawTdee = bmr * activity;
-      // (3) 한국인 15% 차감
       const tdee = rawTdee * 0.85;
-      // (4) 목적 ±10%
-      let targetCal;
-      if (goal === "gain") {
-        targetCal = tdee * 1.1; // 증량
-      } else {
-        targetCal = tdee * 0.9; // 감량
-      }
+      let targetCal = goal === "gain" ? tdee * 1.1 : tdee * 0.9;
 
-      // (5) 매크로 계산
       const proteinRatio = 0.3, carbRatio = 0.5, fatRatio = 0.2;
       let totalProtein = (targetCal * proteinRatio) / 4;
       let totalCarbs   = (targetCal * carbRatio) / 4;
       let totalFats    = (targetCal * fatRatio) / 9;
 
-      // 보충제 30g 선섭취
       totalProtein -= 30;
       if (totalProtein < 0) totalProtein = 0;
 
@@ -236,7 +237,6 @@
       const mealCarbs   = (totalCarbs   / 3).toFixed(1);
       const mealFats    = (totalFats    / 3).toFixed(1);
 
-      // 결과 요약
       let html = `
         <h2>📊 결과 요약</h2>
         <p><b>하루 기초 소비 칼로리:</b> ${bmr.toFixed(0)} kcal</p>
@@ -248,16 +248,14 @@
         <p>간식으로 단백질 보충제(1스쿱 - 단백질 30g) 섭취 가정</p>
         <p>단백질 40g 이상이 권장 섭취량일 경우, 별도로 식사를 추가 구성하여 섭취 (4끼 이상)</p>
       `;
-      const macroHTML = `
+      html += `
         <div class="macro-highlight">
           <span>단백질: ${mealProtein}g</span>
           <span>탄수화물: ${mealCarbs}g</span>
           <span>지방: ${mealFats}g</span>
         </div>
       `;
-      html += macroHTML;
 
-      // 무작위 식단 예시
       const randProtein = pickRandom(PROTEIN_SOURCES);
       const randCarb    = pickRandom(CARB_SOURCES);
       const randFat     = pickRandom(FAT_SOURCES);
@@ -266,7 +264,7 @@
       const cAmt = (mealCarbs   / randCarb.carbs)       * 100;
       const fAmt = (mealFats    / randFat.fat)          * 100;
 
-      const exampleHtml = `
+      html += `
         <div class="example-meal">
           <h3>🍽 1끼 예시 식단 조합 (단순 계산)</h3>
           <p><b>단백질 식품:</b> ${randProtein.name} 약 <b>${pAmt.toFixed(0)}g</b></p>
@@ -276,25 +274,19 @@
             ※ 실제로 각 식품에 복합 영양소가 포함되어 있어 오차가 있을 수 있습니다.
           </p>
         </div>
-      `;
-
-      const spacer = `<div class="spacer"></div>`;
-      // 상세 식재료 목록
-      const detailHtml = `
+        <div class="spacer"></div>
         <h3>🥩 단백질 급원</h3>
         <ul>
           ${PROTEIN_SOURCES.map(item => `
             <li>${item.name} - 100g 기준: 단백질 ${item.protein}g / 탄수화물 ${item.carbs}g / 지방 ${item.fat}g</li>
           `).join("")}
         </ul>
-
         <h3>🍚 탄수화물 급원</h3>
         <ul>
           ${CARB_SOURCES.map(item => `
             <li>${item.name} - 100g 기준: 단백질 ${item.protein}g / 탄수화물 ${item.carbs}g / 지방 ${item.fat}g</li>
           `).join("")}
         </ul>
-
         <h3>🥑 지방 급원</h3>
         <ul>
           ${FAT_SOURCES.map(item => `
@@ -303,8 +295,7 @@
         </ul>
       `;
 
-      const finalHTML = html + exampleHtml + spacer + detailHtml;
-      document.getElementById("result").innerHTML = finalHTML;
+      document.getElementById("result").innerHTML = html;
     }
   </script>
 </body>
